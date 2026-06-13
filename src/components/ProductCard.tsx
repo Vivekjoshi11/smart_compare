@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 interface ProductCardProps {
   brandName: string;
   productName: string;
@@ -5,6 +7,7 @@ interface ProductCardProps {
   quantity: number;
   total: number;
   isSelected?: boolean;
+  children?: ReactNode;
 }
 
 export const ProductCard = ({
@@ -13,7 +16,8 @@ export const ProductCard = ({
   price,
   quantity,
   total,
-  isSelected = false
+  isSelected = false,
+  children
 }: ProductCardProps) => {
   return (
     <div className={`border rounded-lg p-4 hover:shadow-md transition-shadow 
@@ -30,6 +34,7 @@ export const ProductCard = ({
         <span className="font-medium text-gray-800 dark:text-gray-100">₹{price.toFixed(2)}</span>
         <span className="font-bold text-lg text-gray-900 dark:text-gray-100">₹{total.toFixed(2)}</span>
       </div>
+      {children}
     </div>
   );
 };

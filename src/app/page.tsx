@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
+
 import Image from "next/image";
 import { useState } from 'react';
 import { brands, categories, productItems, getProductsByCategory, getProductByBrandAndCategory } from "./mockData";
-import { InputNumber } from "./components/InputNumber";
-import { Select } from "./components/Select";
-import { ProductCard } from "./components/ProductCard";
-import { SummaryCard } from "./components/SummaryCard";
+import { InputNumber } from "../components/InputNumber";
+import { Select } from "../components/Select";
+import { ProductCard } from "../components/ProductCard";
+import { SummaryCard } from "../components/SummaryCard";
 
-export default function Home() {
+export default function Home () {
   // Form state
   const [projectName, setProjectName] = useState('');
   const [selectedPlateSize, setSelectedPlateSize] = useState<number | null>(null);
@@ -152,7 +155,7 @@ export default function Home() {
           const quantityForThisBrand = item.brandSelections[brand.id] || 0;
           
           if (quantityForThisBrand > 0) {
-            const product = getProductByBrandAndCategory(brand.id, item.categoryId);
+            const product = getProductByBrandAndCategory(brand.id, item.categoryId) ?? null;
             const itemTotal = product ? product.price * quantityForThisBrand : 0;
             
             brandItems.push({
@@ -206,18 +209,14 @@ export default function Home() {
               alt="Next.js Logo"
               width={394}
               height={80}
-              unsized
               className="h-8 w-auto dark:invert"
-              priority
             />
             <Image
               src="/vercel.svg"
               alt="Vercel Logo"
               width={1155}
               height={1000}
-              unsized
               className="h-8 w-auto dark:invert ml-4"
-              priority
             />
           </div>
           <h1 className="text-2xl font-bold text-center text-gray-900 dark:text-gray-100">
@@ -253,9 +252,9 @@ export default function Home() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Modular Plate Size (in modules)
                 </label>
-                <Select<number>
+                <Select
                   label="Plate Size"
-                  options=[
+                  options={[
                     { value: 1, label: '1 Module' },
                     { value: 2, label: '2 Modules' },
                     { value: 3, label: '3 Modules' },
@@ -263,7 +262,7 @@ export default function Home() {
                     { value: 6, label: '6 Modules' },
                     { value: 8, label: '8 Modules' },
                     { value: 12, label: '12 Modules' }
-                  ]
+                  ]}
                   value={selectedPlateSize}
                   onChange={setSelectedPlateSize}
                   placeholder="Select plate size"
@@ -302,12 +301,12 @@ export default function Home() {
                 
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
-                    <Select<number>
+                    <Select
                       label="Category"
-                      options=categories.map(cat => ({
+                      options={categories.map(cat => ({
                         value: cat.id,
                         label: `${cat.name} (${cat.module_size} module${cat.module_size > 1 ? 's' : ''})`
-                      }))
+                      }))}
                       value={item.categoryId || null}
                       onChange={(value) => handleCategoryChange(index, value)}
                       placeholder="Select category"
@@ -338,7 +337,6 @@ export default function Home() {
                               max={20}
                               value={item.brandSelections[brand.id] || 0}
                               onChange={(value) => handleBrandSelection(index, brand.id, value)}
-                              className="flex-1"
                             />
                           </div>
                         ))}
@@ -379,18 +377,36 @@ export default function Home() {
                 Price Comparison Results
               </h2>
               
-              {/* Validation Message */}
-              {selectedItems.length > 0 && selectedPlateSize !== null && (
-                <div className="mb-6 p-4 rounded-lg 
-                  {results.every(r => isValidSelection(r.totalModules)) 
+                {/* Validation Message */}
+                {selectedItems.length > 0 && selectedPlateSize !== null && (
+                  <div className={`mb-6 p-4 rounded-lg ${results.every(r => isValidSelection(r.totalModules)) 
                     ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700'
                     : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700'
-                  }">
-                  <div className="flex items-start">
-                    { /* ... */}
+                  }`}>
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        {results.every(r => isValidSelection(r.totalModules)) 
+                          ? '✓' 
+                          : '✗'}
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">
+                          {results.every(r => isValidSelection(r.totalModules)) 
+                            ? 'All selections fit within the selected plate size' 
+                            : 'Some selections exceed the selected plate size'}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          Selected plate size: {selectedPlateSize} modules
+                        </p>
+                        {!results.every(r => isValidSelection(r.totalModules)) && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            Please reduce quantities or select a larger plate size.
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
               
               {/* Brand Comparison Cards */}
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -400,21 +416,19 @@ export default function Home() {
                       brandName={result.brand.name}
                       productName="Various Items"
                       price={result.subtotal}
-                      quantity=1 // This is a bit misleading, but we're showing totals
+                      quantity={1}
                       total={result.subtotal}
                       isSelected={index === bestValueIndex}
                     >
-                      {result.items.map((item, itemIndex) => (
-                        item.product && item.quantity > 0 && (
-                          <div key={itemIndex} className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex justify-between">
-                            <span>{item.category.name} × {item.quantity}</span>
-                            <span>₹{(item.product!.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                        )
+                      {result.items.filter(item => item.product && item.quantity > 0).map((item, itemIndex) => (
+                        <div key={itemIndex} className="mt-2 text-sm text-gray-600 dark:text-gray-400 flex justify-between">
+                          <span>{item.category.name} × {item.quantity}</span>
+                          <span>₹{(item.product!.price * item.quantity).toFixed(2)}</span>
+                        </div>
                       ))}
                     </ProductCard>
                   </div>
-                )}
+                ))}
               </div>
               
               {/* Summary Cards */}

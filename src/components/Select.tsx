@@ -1,6 +1,8 @@
+"use client";
+
 import { useState } from 'react';
 
-interface SelectProps<T> {
+interface SelectProps<T extends string | number> {
   label: string;
   options: Array<{ value: T; label: string }>;
   value: T | null;
@@ -8,7 +10,7 @@ interface SelectProps<T> {
   placeholder?: string;
 }
 
-export const Select = <T>({
+export const Select = <T extends string | number,>({
   label,
   options,
   value,
