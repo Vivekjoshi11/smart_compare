@@ -367,7 +367,7 @@ export default function ComparePage () {
                     : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700'
                   }`}>
                     <div className="flex items-start">
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {results.every(r => isValidSelection(r.totalModules)) 
                           ? '✓' 
                           : '✗'}
