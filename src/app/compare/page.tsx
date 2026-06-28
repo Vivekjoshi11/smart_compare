@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { brands, categories, productItems, getProductsByCategory, getProductByBrandAndCategory } from "../mockData";
 import { InputNumber } from "../../components/InputNumber";
 import { Select } from "../../components/Select";
@@ -199,6 +200,69 @@ export default function ComparePage () {
     return selectedPlateSize !== null && totalModules <= selectedPlateSize;
   };
 
+  // Export to Excel function
+  const exportToExcel = () => {
+    if (results.length === 0) return;
+
+    // Get all unique categories from all results
+    const categoryMap = new Map<number, typeof categories[0]>();
+    results.forEach(result => {
+      result.items.forEach(item => {
+        if (item.category) {
+          categoryMap.set(item.category.id, item.category);
+        }
+      });
+    });
+
+    const allCategories = Array.from(categoryMap.values());
+    const activeBrands = brands.filter(b => selectedBrandIds.includes(b.id));
+
+    // Create worksheet data with brands as columns
+    const data: any[][] = [];
+
+    // Header row
+    const header = ['Category', 'Product'];
+    activeBrands.forEach(brand => {
+      header.push(`${brand.name}\nPrice`, `${brand.name}\nQuantity`);
+    });
+    data.push(header);
+
+    // Data rows - one row per category
+    allCategories.forEach(category => {
+      const row: any[] = [category.name, category.module_size];
+
+      activeBrands.forEach(brand => {
+        const brandResult = results.find(r => r.brand.id === brand.id);
+        const item = brandResult?.items.find(i => i.category.id === category.id);
+
+        if (item && item.product && item.quantity > 0) {
+          row.push(item.product.price);
+          row.push(item.quantity);
+        } else {
+          row.push('-', '-');
+        }
+      });
+
+      data.push(row);
+    });
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Comparison');
+
+    // Set column widths
+    const colWidths = [
+      { wch: 20 }, // Category
+      { wch: 15 }, // Product/Modules
+      ...activeBrands.flatMap(() => [{ wch: 12 }, { wch: 10 }])
+    ];
+    ws['!cols'] = colWidths;
+
+    // Export
+    XLSX.writeFile(wb, `product-comparison-${new Date().toISOString().slice(0,10)}.xlsx`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -387,9 +451,17 @@ export default function ComparePage () {
 
           {results.length > 0 && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold mb-6 text-gray-900 dark:text-gray-100">
-                Price Comparison Results
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                  Price Comparison Results
+                </h2>
+                <button
+                  onClick={exportToExcel}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                >
+                  Export to Excel
+                </button>
+              </div>
               
                 {selectedItems.length > 0 && selectedPlateSize !== null && (
                   <div className={`mb-6 p-4 rounded-lg ${results.every(r => isValidSelection(r.totalModules)) 
