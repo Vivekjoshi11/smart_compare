@@ -14,6 +14,7 @@ export default function ComparePage () {
   // Form state
   const [projectName, setProjectName] = useState('');
   const [selectedPlateSize, setSelectedPlateSize] = useState<number | null>(null);
+  const [selectedBrandIds, setSelectedBrandIds] = useState<number[]>(brands.map(b => b.id));
   const [selectedItems, setSelectedItems] = useState<Array<{
     categoryId: number;
     quantity: number;
@@ -44,6 +45,15 @@ export default function ComparePage () {
       const category = categories.find(cat => cat.id === selection.categoryId);
       return total + (category ? category.module_size * selection.quantity : 0);
     }, 0);
+  };
+
+  const toggleBrand = (brandId: number) => {
+    setSelectedBrandIds(prev => {
+      if (prev.includes(brandId)) {
+        return prev.filter(id => id !== brandId);
+      }
+      return [...prev, brandId];
+    });
   };
 
   const handleAddItem = () => {
@@ -131,7 +141,8 @@ export default function ComparePage () {
         totalModules: number;
       }> = [];
 
-      brands.forEach(brand => {
+      const activeBrands = brands.filter(b => selectedBrandIds.includes(b.id));
+      activeBrands.forEach(brand => {
         let subtotal = 0;
         let totalModules = 0;
         const brandItems: Array<{
@@ -256,6 +267,25 @@ export default function ComparePage () {
                 />
               </div>
             </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Companies to Compare
+              </label>
+              <div className="flex flex-wrap gap-4">
+                {brands.map(brand => (
+                  <label key={brand.id} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedBrandIds.includes(brand.id)}
+                      onChange={() => toggleBrand(brand.id)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm text-gray-900 dark:text-gray-100">{brand.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -315,7 +345,7 @@ export default function ComparePage () {
                         Brand Selections
                       </label>
                       <div className="space-y-2">
-                        {brands.map(brand => (
+                        {brands.filter(b => selectedBrandIds.includes(b.id)).map(brand => (
                           <div key={brand.id} className="flex items-center">
                             <InputNumber
                               label={brand.name}
